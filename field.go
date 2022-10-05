@@ -17,6 +17,9 @@ func (f *field) isEmpty() bool {
 
 // set value to field
 func (f *field) set(val string) error {
+    if !f.v.CanSet() || !f.v.CanAddr() {
+        return ValueCanNotSet
+    }
     switch f.v.Kind() {
     case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
         v, err := strconv.ParseInt(val, 10, 64)
@@ -44,6 +47,8 @@ func (f *field) set(val string) error {
             return fmt.Errorf("can not convert %s to bool. field:%s err:%w", val, f.v.Type().Name(), err)
         }
         f.v.SetBool(v)
+    default:
+        return DataTypeNotSupport
     }
     return nil
 }
