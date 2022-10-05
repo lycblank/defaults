@@ -2,12 +2,13 @@ package main
 
 import (
     "fmt"
-    "github.com/lycblank/defaults"
+    "github.com/lycblank/defaults/json"
 )
 
 func main() {
+    raw := `{}`
     car := &Car{}
-    if err := defaults.Apply(car); err != nil {
+    if err := json.Unmarshal([]byte(raw), car); err != nil {
         panic(err)
     }
     fmt.Printf("car:%+v\n", car) //Prints: car:&{Color:red Size:100 IsImport:true WheelRadius:1.01 SeatCount:4}

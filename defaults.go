@@ -24,6 +24,9 @@ func applyStruct(v reflect.Value) error {
     numField := v.NumField()
     t := v.Type()
     for i := 0; i < numField; i++ {
+        if !t.Field(i).IsExported() {
+            continue
+        }
         field.v = v.Field(i)
         if err := field.apply(t.Field(i).Tag); err != nil {
             return err
