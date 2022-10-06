@@ -62,6 +62,10 @@ func (f *field) apply(tag reflect.StructTag) error {
         return FieldCanNotSet
     }
 
-    defaultValue := tag.Get(defaultTag)
+    defaultValue, ok := tag.Lookup(defaultTag)
+    if !ok {
+        return nil
+    }
+
     return f.set(defaultValue)
 }

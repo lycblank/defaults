@@ -4,17 +4,26 @@ import "reflect"
 
 // Apply set default values for variables
 func Apply(v interface{}) error {
-    rv := reflect.ValueOf(v)
-    if rv.Kind() != reflect.Ptr {
-        return ApplyValueNotPtr
-    }
-    rv = rv.Elem()
+    return apply(reflect.ValueOf(v))
+}
 
-    if rv.Kind() == reflect.Struct {
+func apply(rv reflect.Value) error {
+    switch rv.Kind() {
+    case reflect.Ptr:
+        return apply(rv.Elem())
+    case reflect.Struct:
         return applyStruct(rv)
+    case reflect.Slice, reflect.Array:
+        count := rv.Len()
+        for i := 0; i < count; i++ {
+            if err := apply(rv.Index(i)); err != nil {
+                return err
+            }
+        }
+        return nil
+    default:
+        return nil
     }
-
-    return DataTypeNotSupport
 }
 
 // set default values for struct
