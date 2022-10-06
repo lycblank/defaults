@@ -2,21 +2,31 @@ package defaults
 
 import "reflect"
 
+var defaultDefault = &DefaultContainer{}
+
 // Apply set default values for variables
 func Apply(v interface{}) error {
-    return apply(reflect.ValueOf(v))
+    return defaultDefault.Apply(v)
 }
 
-func apply(rv reflect.Value) error {
+type DefaultContainer struct {
+}
+
+// Apply set default values for variables
+func  (d *DefaultContainer) Apply(v interface{}) error {
+    return d.apply(reflect.ValueOf(v))
+}
+
+func (d *DefaultContainer) apply(rv reflect.Value) error {
     switch rv.Kind() {
     case reflect.Ptr:
-        return apply(rv.Elem())
+        return d.apply(rv.Elem())
     case reflect.Struct:
-        return applyStruct(rv)
+        return d.applyStruct(rv)
     case reflect.Slice, reflect.Array:
         count := rv.Len()
         for i := 0; i < count; i++ {
-            if err := apply(rv.Index(i)); err != nil {
+            if err := d.apply(rv.Index(i)); err != nil {
                 return err
             }
         }
@@ -27,7 +37,7 @@ func apply(rv reflect.Value) error {
 }
 
 // set default values for struct
-func applyStruct(v reflect.Value) error {
+func (d *DefaultContainer) applyStruct(v reflect.Value) (err error) {
     field := &field{}
 
     numField := v.NumField()
@@ -36,13 +46,28 @@ func applyStruct(v reflect.Value) error {
         if !t.Field(i).IsExported() {
             continue
         }
-        field.v = v.Field(i)
-        if err := field.apply(t.Field(i).Tag); err != nil {
+
+        rv := v.Field(i)
+        switch rv.Kind() {
+        case reflect.Ptr:
+            err = d.apply(rv.Elem())
+        case reflect.Struct:
+            err = d.applyStruct(rv)
+        case reflect.Slice, reflect.Array:
+            count := rv.Len()
+            for i := 0; i < count; i++ {
+                if err = d.apply(rv.Index(i)); err != nil {
+                    return err
+                }
+            }
+        default:
+            field.v = rv
+            err = field.apply(t.Field(i).Tag)
+        }
+
+        if err != nil {
             return err
         }
     }
     return nil
 }
-
-
-
